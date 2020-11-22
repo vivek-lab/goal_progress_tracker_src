@@ -3,15 +3,15 @@ const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 
 const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 const port = 3000
-mongoose.connect('mongodb://localhost:27017/goal_progress_tracking', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost:27017/goal_progress_tracker', { useNewUrlParser: true, useUnifiedTopology: true });
 
 const goalSchema = new mongoose.Schema({
     name: String,
     description: String,
-    type: String,
     priority: Number,
     startDate: Date,
     endDate: Date,
@@ -26,7 +26,6 @@ function addGoals() {
         let goal = new Goal({
             name: "Goal1",
             description: "A short goal",
-            type: "Short",
             priority: 1,
             startDate: new Date(),
             endDate: new Date(),
@@ -44,7 +43,6 @@ function addGoals() {
         let goal = new Goal({
             name: "Goal1",
             description: "A long goal",
-            type: "Long",
             priority: 1,
             startDate: new Date(),
             endDate: new Date(),
@@ -76,8 +74,9 @@ app.get('/goals', (req, res) => {
     });
 });
 
-app.post('/addGoal', (req, res) => {
+app.post('/saveGoal', (req, res) => {
     console.log(req.body);
+    res.send("success");
 });
 
 // app.get('/', (req, res) => {

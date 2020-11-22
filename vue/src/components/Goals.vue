@@ -38,73 +38,30 @@ export default {
     return {
       shortGoals: [],
       longGoals: [],
-      goals: [
-        {
-          key: 1,
-          priority: 1,
-          name: "Complete project",
-          description:
-            "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-          startDate: new Date().toLocaleDateString(),
-          endDate: new Date().toLocaleDateString(),
-        },
-        {
-          key: 2,
-          priority: 2,
-          name: "Data Structure",
-          description: "Revise it",
-          startDate: "Sep",
-          endDate: "Dec",
-        },
-        {
-          key: 3,
-          priority: 3,
-          name: "Data Structure",
-          description: "Revise it",
-          startDate: "Sep",
-          endDate: "Dec",
-        },
-        {
-          key: 4,
-          priority: 4,
-          name: "Data Structure",
-          description: "Revise it",
-          startDate: "Sep",
-          endDate: "Dec",
-        },
-        {
-          key: 5,
-          priority: 5,
-          name: "Data Structure",
-          description: "Revise it",
-          startDate: "Sep",
-          endDate: "Dec",
-        },
-        {
-          key: 6,
-          priority: 6,
-          name: "Data Structure",
-          description: "Revise it",
-          startDate: "Sep",
-          endDate: "Dec",
-        },
-      ],
     };
   },
+  methods: {
+    isShortGoal(goal) {
+      return goal.description.includes("short");
+    },
+    populateGoals() {
+      this.axios
+        .get("http://localhost:3000/goals")
+        .then((response) => {
+          console.log(response.data);
+          response.data.forEach((goal) => {
+            goal.startDate = new Date(goal.startDate).toLocaleDateString();
+            goal.endDate = new Date(goal.endDate).toLocaleDateString();
+            this.isShortGoal(goal)
+              ? this.shortGoals.push(goal)
+              : this.longGoals.push(goal);
+          });
+        })
+        .catch((error) => console.log(error));
+    },
+  },
   mounted() {
-    this.axios
-      .get("http://localhost:3000/goals")
-      .then((response) => {
-        console.log(response.data);
-        response.data.forEach((goal) => {
-          goal.startDate = new Date(goal.startDate).toLocaleDateString();
-          goal.endDate = new Date(goal.endDate).toLocaleDateString();
-          goal.type == "Short"
-            ? this.shortGoals.push(goal)
-            : this.longGoals.push(goal);
-        });
-      })
-      .catch((error) => console.log(error));
+    this.populateGoals();
   },
 };
 </script>

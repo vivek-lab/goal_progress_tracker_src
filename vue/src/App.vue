@@ -1,111 +1,51 @@
 <template>
-  <div :class="['header', { 'fixed-top': isFixed }]" id="header">
-    <nav :class="['nav', 'nav-tabs', 'nav-justified']">
-      <a
-        :class="[
-          'nav-link',
-          'btn-outline-dark',
-          'navigation',
-          { clicked: isGoalsClicked },
-        ]"
-        @click="changeTab('Goals')"
-        >Goals</a
-      >
-
-      <button type="button" class="btn btn-outline-success add-goal">+</button>
-
-      <a
-        :class="[
-          'nav-link',
-          'btn-outline-dark',
-          'navigation',
-          { clicked: isCalendarClicked },
-        ]"
-        @click="changeTab('Calendar')"
-        >Calendar</a
-      >
-    </nav>
-
-    <date-carousel v-if="!toggleScreen"></date-carousel>
-  </div>
-  <div :style="{ 'margin-top': topMargin }">
-    <goals v-if="toggleScreen"></goals>
-    <calendar v-else></calendar>
-  </div>
-
-  <div id="add-goal-form" class="d-none">
-    <form action="http://localhost:3000/addGoal" method="post" @submit.prevent>
-      <div class="form-floating">
-        <input
-          name="name"
-          type="text"
-          class="form-control"
-          id="goal-name-template"
-          placeholder="Goal Name"
-        />
-        <label for="goal-name-template">Name</label>
-      </div>
-
-      <div class="form-floating">
-        <textarea
-          name="description"
-          class="form-control"
-          placeholder="Goal Description"
-          id="goal-description-template"
-          style="height: 100px"
-        ></textarea>
-        <label for="goal-description-template">Description</label>
-      </div>
-
-      <label for="goal-priority-template" class="form-label">Priority</label>
-      <input
-        name="priority"
-        type="range"
-        class="form-range"
-        min="0"
-        max="5"
-        id="goal-priority-template"
-      />
-
-      <label for="start-date-template" class="form-label">Start Date</label>
-      <input
-        name="startDate"
-        type="date"
-        class="form-control"
-        id="start-date-template"
-      />
-
-      <label for="end-date-template" class="form-label">End Date</label>
-      <input
-        name="endDate"
-        type="date"
-        class="form-control"
-        id="end-date-template"
-      />
-
-      <label>Goal Occurrence</label>
-      <div>
-        <div
-          class="form-check form-check-inline"
-          v-for="(day, index) in weekDays"
-          :key="index"
+  <div>
+    <div class="header fixed-top" id="header">
+      <nav :class="['nav', 'nav-tabs', 'nav-justified']">
+        <a
+          :class="[
+            'nav-link',
+            'btn-outline-dark',
+            'navigation',
+            { clicked: isGoalsClicked },
+          ]"
+          @click="changeTab('Goals')"
+          >Goals</a
         >
-          <input
-            name="day"
-            class="form-check-input"
-            type="checkbox"
-            :id="'goal-occurrence-' + day + '-template'"
-            :value="day"
-          />
-          <label
-            class="form-check-label"
-            :for="'goal-occurrence-' + day + '-template'"
-            >{{ day }}</label
-          >
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+
+        <button
+          type="button"
+          class="btn btn-outline-success add-goal"
+          :class="[
+            'btn',
+            'btn-outline-success',
+            'add-goal',
+            { active: isAddGoalFormActive },
+          ]"
+          @click="changeTab('AddGoalForm')"
+        >
+          +
+        </button>
+
+        <a
+          :class="[
+            'nav-link',
+            'btn-outline-dark',
+            'navigation',
+            { clicked: isCalendarClicked },
+          ]"
+          @click="changeTab('Calendar')"
+          >Calendar</a
+        >
+      </nav>
+
+      <date-carousel v-if="isCalendarClicked"></date-carousel>
+    </div>
+    <div :style="{ 'margin-top': topMargin }">
+      <goals v-if="isGoalsClicked"></goals>
+      <add-goal-form v-else-if="isAddGoalFormActive"></add-goal-form>
+      <calendar v-else></calendar>
+    </div>
   </div>
 </template>
 
@@ -113,7 +53,7 @@
 import Goals from "./components/Goals.vue";
 import Calendar from "./components/Calendar.vue";
 import DateCarousel from "./components/DateCarousel.vue";
-import Popover from "bootstrap/js/dist/popover";
+import AddGoalForm from "./components/AddGoalForm.vue";
 
 export default {
   name: "App",
@@ -121,21 +61,20 @@ export default {
     Goals,
     Calendar,
     DateCarousel,
+    AddGoalForm,
   },
   data() {
     return {
-      toggleScreen: true,
       isFixed: true,
-      isGoalsClicked: false,
+      isGoalsClicked: true,
       isCalendarClicked: false,
+      isAddGoalFormActive: false,
       topMargin: "0px",
-      weekDays: ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"],
     };
   },
   mounted() {
     this.setTopMargin();
     window.addEventListener("resize", this.setTopMargin);
-    this.activatePopover();
   },
   updated() {
     this.setTopMargin();
@@ -147,27 +86,20 @@ export default {
     changeTab(tabName) {
       if (tabName === "Calendar") {
         this.isGoalsClicked = false;
+        this.isAddGoalFormActive = false;
         this.isCalendarClicked = true;
-        this.toggleScreen = false;
       } else if (tabName === "Goals") {
         this.isGoalsClicked = true;
+        this.isAddGoalFormActive = false;
         this.isCalendarClicked = false;
-        this.toggleScreen = true;
+      } else if (tabName === "AddGoalForm") {
+        this.isGoalsClicked = false;
+        this.isAddGoalFormActive = true;
+        this.isCalendarClicked = false;
       }
     },
     setTopMargin() {
       this.topMargin = document.getElementById("header").offsetHeight + "px";
-    },
-    activatePopover() {
-      new Popover(document.getElementsByClassName("add-goal")[0], {
-        sanitize: false,
-        container: "body",
-        placement: "bottom",
-        html: true,
-        content: document
-          .getElementById("add-goal-form")
-          .innerHTML.replaceAll("-template", ""),
-      });
     },
   },
 };
