@@ -39,12 +39,16 @@
         >
       </nav>
 
-      <date-carousel v-if="isCalendarClicked"></date-carousel>
+      <date-carousel
+        v-if="isCalendarClicked"
+        @week-change="updateCalendar"
+      ></date-carousel>
     </div>
     <div :style="{ 'margin-top': topMargin }">
       <goals v-if="isGoalsClicked"></goals>
       <add-goal-form v-else-if="isAddGoalFormActive"></add-goal-form>
-      <calendar v-else></calendar>
+      <!-- <calendar v-else :start-day="" :last-day=""></calendar> -->
+      <calendar v-else :active-week="currentWeekRange"></calendar>
     </div>
   </div>
 </template>
@@ -70,6 +74,7 @@ export default {
       isCalendarClicked: false,
       isAddGoalFormActive: false,
       topMargin: "0px",
+      currentWeekRange: null,
     };
   },
   mounted() {
@@ -83,6 +88,9 @@ export default {
     window.removeEventListener("resize", this.setTopMargin);
   },
   methods: {
+    updateCalendar(weekRange) {
+      this.currentWeekRange = weekRange;
+    },
     changeTab(tabName) {
       if (tabName === "Calendar") {
         this.isGoalsClicked = false;

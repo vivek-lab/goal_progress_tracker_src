@@ -22,6 +22,7 @@ import GoalOccurrence from "./GoalOccurrence.vue";
 export default {
   name: "Calender",
   components: { GoalOccurrence },
+  props: ["activeWeek"],
   data() {
     return {
       weekDays: ["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"],
@@ -52,7 +53,26 @@ export default {
         //   comment: "Revise it",
         // },
       ],
+      allOccurrences: [],
     };
+  },
+  watch: {
+    activeWeek(week) {
+      // console.log(this.activeWeek.lastDay);
+      console.log(week.lastDay);
+    },
+  },
+  created() {
+    this.axios
+      .post("http://localhost:3000/allOccurrences", {
+        from: new Date("2020-11-01"),
+        to: new Date("2020-11-30"),
+      })
+      .then((response) => {
+        console.log(response);
+        this.allOccurrences = response;
+      })
+      .catch((error) => console.log(error));
   },
 };
 </script>

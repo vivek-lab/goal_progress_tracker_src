@@ -48,6 +48,7 @@ export default {
       this.axios
         .get("http://localhost:3000/goals")
         .then((response) => {
+          // response.test();
           console.log(response.data);
           response.data.forEach((goal) => {
             goal.startDate = new Date(goal.startDate).toLocaleDateString();

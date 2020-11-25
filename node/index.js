@@ -6,8 +6,15 @@ const app = express();
 // app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-const port = 3000
-mongoose.connect('mongodb://localhost:27017/goal_progress_tracker', { useNewUrlParser: true, useUnifiedTopology: true });
+const port = 3000;
+mongoose.connect('mongodb://localhost:27017/goal_progress_tracker', { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true });
+
+const occurrenceSchema = new mongoose.Schema({
+    occurrenceId: { type: Number, index: true },
+    comment: String,
+    date: Date,
+    status: String
+}, { _id: false }); // { _id: false } -< only applies to Sub Schema 
 
 const goalSchema = new mongoose.Schema({
     name: String,
@@ -15,50 +22,13 @@ const goalSchema = new mongoose.Schema({
     priority: Number,
     startDate: Date,
     endDate: Date,
+    occurrences: [occurrenceSchema]
 });
 
+
+
+const Occurrence = mongoose.model('Occurrence', occurrenceSchema);
 const Goal = mongoose.model('Goal', goalSchema);
-
-function addGoals() {
-
-
-    for (let i = 0; i < 4; i++) {
-        let goal = new Goal({
-            name: "Goal1",
-            description: "A short goal",
-            priority: 1,
-            startDate: new Date(),
-            endDate: new Date(),
-        });
-        goal.save(function (err, goal) {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log("goal saved");
-            }
-        });
-    }
-
-    for (let i = 0; i < 4; i++) {
-        let goal = new Goal({
-            name: "Goal1",
-            description: "A long goal",
-            priority: 1,
-            startDate: new Date(),
-            endDate: new Date(),
-        });
-        goal.save(function (err, goal) {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log("goal saved");
-            }
-        });
-    }
-}
-
-// addGoals();
-
 
 
 
@@ -74,21 +44,86 @@ app.get('/goals', (req, res) => {
     });
 });
 
-app.post('/saveGoal', (req, res) => {
+app.post('/allOccurrences', (req, res) => {
     console.log(req.body);
-    res.send("success");
+    Goal.find({
+        startDate: { $gte: new Date(req.body.from) },
+        endDate: { $lte: new Date(req.body.to) }
+    }, function (err, goals) {
+        if (err) {
+            console.log(err);
+            res.send("Some error at server");
+        } else {
+            const occurrenceList = [];
+            goals.forEach(function (goal) {
+                goal.occurrences.forEach(function (occurrence) {
+                    occurrenceList.push(occurrence);
+                });
+            });
+            res.send(occurrenceList);
+        }
+        // mongoose.connection.close();
+    });
 });
 
-// app.get('/', (req, res) => {
-//     res.send('Hi Axios');
-// })
+const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
+function addDays(baseDate, days) {
+    let date = new Date(baseDate.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
 
-// app.get('/contact', (req, res) => {
-//     res.send('Contact me at : viveksingh7396@gmail.com')
-// })
+
+app.post('/saveGoal', (req, res) => {
+    console.log(req.body);
+
+    const startDate = new Date(req.body.startDate);
+    const endDate = new Date(req.body.endDate);
+
+    const period = (endDate - startDate) / oneDay;
+    let date = startDate;
+    const occurrenceList = [];
+    for (let dayItr = 0, occurrenceItr = 0; dayItr <= period; dayItr++) {
+
+        if (req.body.occurrence[weekDays[date.getDay()]]) {
+
+            occurrenceList.push(
+                new Occurrence({
+                    occurrenceId: occurrenceItr++,
+                    comment: "",
+                    date: date,
+                    status: "New"
+                })
+            );
+        }
+
+        date = addDays(date, 1);
+    }
+
+    const goal = new Goal({
+        name: req.body.name,
+        description: req.body.description,
+        priority: parseInt(req.body.priority),
+        startDate: startDate,
+        endDate: endDate,
+        occurrences: occurrenceList
+    });
+
+    goal.save(function (err, goal) {
+        if (err) {
+            res.send(err);
+        } else {
+            console.log("Goal Saved");
+        }
+    });
+
+    res.send("Success");
+});
 
 
 app.use(express.static("public"));
+
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })

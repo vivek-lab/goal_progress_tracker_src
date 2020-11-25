@@ -70,6 +70,7 @@ import ScrollSpy from "bootstrap/js/dist/scrollspy";
 
 export default {
   name: "DateCarousel",
+  emits: ["week-change"],
   data() {
     return {
       weekDays: ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"],
@@ -87,13 +88,15 @@ export default {
         "Nov",
         "Dec",
       ],
-      currentWeek: "first",
       previousDirection: "right",
       firstWeek: [],
       secondWeek: [],
     };
   },
   methods: {
+    emitWeekChangeEvent(week) {
+      this.$emit("week-change", { startDay: week[0], lastDay: week[6] });
+    },
     addDays(baseDate, days) {
       let date = new Date(baseDate.valueOf());
       date.setDate(date.getDate() + days);
@@ -116,6 +119,8 @@ export default {
         this.secondWeek,
         this.addDays(currentDate, dayOffset * -1 + 7)
       );
+
+      this.emitWeekChangeEvent(this.firstWeek);
     },
     activateScrollSpy(weekID) {
       new ScrollSpy(document.body, {
@@ -159,9 +164,7 @@ export default {
         .addEventListener("slide.bs.carousel", (event) => {
           this.scroll("TOP");
           this.deactivateScrollSpy();
-          this.activateScrollSpy(
-            event.from == 0 ? "second-week" : "first-week"
-          );
+
           if (this.previousDirection == event.direction) {
             if (event.from == 0) {
               this.populateDateArray(
@@ -182,6 +185,14 @@ export default {
             }
           }
           this.previousDirection = event.direction;
+
+          if (event.from == 0) {
+            this.activateScrollSpy("second-week");
+            this.emitWeekChangeEvent(this.secondWeek);
+          } else {
+            this.activateScrollSpy("first-week");
+            this.emitWeekChangeEvent(this.firstWeek);
+          }
         });
     },
     activateScrollSpyAndMoveToCurrentDay() {
